@@ -2,6 +2,11 @@ const fs = require('fs');
 const mkdirp = require('mkdirp');
 const zlib = require('zlib');
 const rmdir = require('rmdir');
+const hash = require('object-hash');
+
+function hashObject(object) {
+  return hash(object, { algorithm: 'md5', encoding: 'base64' });
+}
 
 class PromisedCache {
   constructor(directory, defaultTimeToRelease = 60 * 1000) {
@@ -14,6 +19,10 @@ class PromisedCache {
   get(key) {
     function hasExpired(postData) {
       return postData.expires < Date.now();
+    }
+
+    if (key instanceof Object) {
+      key = hashObject(key);
     }
 
     let post = this.inMemory.get(key);
@@ -53,6 +62,10 @@ class PromisedCache {
   }
 
   set(key, value, timeToRelease = this.defaultTimeToRelease) {
+    if (key instanceof Object) {
+      key = hashObject(key);
+    }
+
     const post = {
       expires: Date.now() + timeToRelease,
       value
@@ -75,6 +88,10 @@ class PromisedCache {
   }
 
   delete(key) {
+    if (key instanceof Object) {
+      key = hashObject(key);
+    }
+
     return new Promise((resolve) => {
       this.inMemory.delete(key);
       fs.unlink(this.getFilenameForKey(key), () => {
@@ -98,6 +115,10 @@ class PromisedCache {
   }
 
   getFilenameForKey(key) {
+    if (key instanceof Object) {
+      key = hashObject(key);
+    }
+
     return `${this.directory}/${key}.json.gz`;
   }
 }

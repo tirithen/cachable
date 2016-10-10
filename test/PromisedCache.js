@@ -2,6 +2,8 @@
 
 const assert = require('assert');
 const rmdir = require('rmdir');
+const hash = require('object-hash');
+
 const PromisedCache = require('../PromisedCache');
 
 describe('PromisedCache', () => {
@@ -76,6 +78,20 @@ describe('PromisedCache', () => {
         }, 10);
       }, done);
     });
+
+    it('should set and get a cache post using object (that will be hashed) as key', (done) => {
+      const inputObject = { text: 'a little text', value: { unit: 'bytes', amount: 10 } };
+      const inputObjectNewOrder = { value: { amount: 10, unit: 'bytes' }, text: 'a little text' };
+      const cache = new PromisedCache('/tmp/PromisedCache#getset6');
+      cache.set(inputObject, { a: 1234 }).then(() => {
+        cache.get(inputObjectNewOrder).then((value) => {
+          rmdir('/tmp/PromisedCache#getset6');
+          assert.equal(value.a, 1234);
+          assert.equal(Object.keys(value).length, 1);
+          done();
+        }, done);
+      }, done);
+    });
   });
 
   describe('#delete', () => {
@@ -115,6 +131,21 @@ describe('PromisedCache', () => {
         }, done);
       }, done);
     });
+
+    it('should delete a cache post using object (that will be hashed) as key', (done) => {
+      const inputObject = { text: 'text', value: { unit: 'bytes', amount: 10 } };
+      const inputObjectNewOrder = { value: { amount: 10, unit: 'bytes' }, text: 'text' };
+      const cache = new PromisedCache('/tmp/PromisedCache#delete4');
+      cache.set(inputObject, 1234).then(() => {
+        cache.delete(inputObject).then(() => {
+          cache.get(inputObject).then((value) => {
+            rmdir('/tmp/PromisedCache#delete4');
+            assert.equal(value, undefined);
+            done();
+          }, done);
+        }, done);
+      }, done);
+    });
   });
 
   describe('#clear', () => {
@@ -140,6 +171,17 @@ describe('PromisedCache', () => {
         '/tmp/PromisedCache#getFilenameForKey/testkey.json.gz'
       );
       rmdir('/tmp/PromisedCache#getFilenameForKey');
+    });
+
+    it('should return a valid filename when using object (will be hashed) as key', () => {
+      const key = { test: 'testing', number: 431 };
+      const keyHash = hash(key, { algorithm: 'md5', encoding: 'base64' });
+      const cache = new PromisedCache('/tmp/PromisedCache#getFilenameForKey2');
+      assert.equal(
+        cache.getFilenameForKey(key),
+        `/tmp/PromisedCache#getFilenameForKey2/${keyHash}.json.gz`
+      );
+      rmdir('/tmp/PromisedCache#getFilenameForKey2');
     });
   });
 });
