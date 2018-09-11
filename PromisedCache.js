@@ -5,7 +5,7 @@ const rmdir = require('rmdir');
 const hash = require('object-hash');
 
 function hashObject(object) {
-  return hash(object, { algorithm: 'md5', encoding: 'base64' });
+  return hash(object);
 }
 
 class PromisedCache {

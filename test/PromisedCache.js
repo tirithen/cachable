@@ -175,7 +175,7 @@ describe('PromisedCache', () => {
 
     it('should return a valid filename when using object (will be hashed) as key', () => {
       const key = { test: 'testing', number: 431 };
-      const keyHash = hash(key, { algorithm: 'md5', encoding: 'base64' });
+      const keyHash = hash(key);
       const cache = new PromisedCache('/tmp/PromisedCache#getFilenameForKey2');
       assert.equal(
         cache.getFilenameForKey(key),
