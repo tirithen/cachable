@@ -168,7 +168,7 @@ describe('PromisedCache', () => {
       const cache = new PromisedCache('/tmp/PromisedCache#getFilenameForKey');
       assert.equal(
         cache.getFilenameForKey('testkey'),
-        '/tmp/PromisedCache#getFilenameForKey/testkey.json.gz'
+        `/tmp/PromisedCache#getFilenameForKey/${hash('testkey')}.json.gz`
       );
       rmdir('/tmp/PromisedCache#getFilenameForKey');
     });

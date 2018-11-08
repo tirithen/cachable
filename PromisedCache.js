@@ -4,8 +4,8 @@ const zlib = require('zlib');
 const rmdir = require('rmdir');
 const hash = require('object-hash');
 
-function hashObject(object) {
-  return hash(object);
+function hasExpired(postData) {
+  return postData.expires < Date.now();
 }
 
 class PromisedCache {
@@ -17,14 +17,7 @@ class PromisedCache {
   }
 
   get(key) {
-    function hasExpired(postData) {
-      return postData.expires < Date.now();
-    }
-
-    if (key instanceof Object) {
-      key = hashObject(key);
-    }
-
+    key = hash(key);
     let post = this.inMemory.get(key);
     return new Promise((resolve) => {
       if (post) {
@@ -42,9 +35,11 @@ class PromisedCache {
         decompress.on('error', () => {
           resolve();
         });
+
         decompress.on('data', (chunk) => {
           post += chunk.toString();
         });
+
         decompress.on('end', () => {
           post = JSON.parse(post);
           if (hasExpired(post)) {
@@ -53,18 +48,18 @@ class PromisedCache {
             resolve(post.value);
           }
         });
+
         readStream.on('error', () => {
           resolve();
         });
+
         readStream.pipe(decompress);
       }
     });
   }
 
   set(key, value, timeToRelease = this.defaultTimeToRelease) {
-    if (key instanceof Object) {
-      key = hashObject(key);
-    }
+    key = hash(key);
 
     const post = {
       expires: Date.now() + timeToRelease,
@@ -88,9 +83,7 @@ class PromisedCache {
   }
 
   delete(key) {
-    if (key instanceof Object) {
-      key = hashObject(key);
-    }
+    key = hash(key);
 
     return new Promise((resolve) => {
       this.inMemory.delete(key);
@@ -115,11 +108,7 @@ class PromisedCache {
   }
 
   getFilenameForKey(key) {
-    if (key instanceof Object) {
-      key = hashObject(key);
-    }
-
-    return `${this.directory}/${key}.json.gz`;
+    return `${this.directory}/${hash(key)}.json.gz`;
   }
 }
 
